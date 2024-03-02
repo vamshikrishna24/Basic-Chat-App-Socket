@@ -12,7 +12,7 @@ import { Socket, io } from "socket.io-client";
 
 type SocketContextType = {
   socket: Socket;
-  disconnect: () => void;
+  disconnect: (cb?: () => void) => void;
 };
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -23,15 +23,16 @@ export function SocketProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = io("http://localhost:8000");
+      socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!);
       setHasSocket(true);
     }
   }, []);
 
-  function disconnect() {
+  function disconnect(cb?: () => void) {
     socketRef.current?.disconnect();
     socketRef.current = null;
     setHasSocket(null);
+    cb?.();
   }
 
   const value = {
@@ -40,8 +41,6 @@ export function SocketProvider({ children }: PropsWithChildren) {
   };
 
   if (hasSocket == false) return "Connecting to socket...";
-
-  if (hasSocket == null) return "No socket connection...";
 
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
